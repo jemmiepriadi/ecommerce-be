@@ -1,6 +1,8 @@
 package model
 
 import (
+	"time"
+
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 )
@@ -57,6 +59,7 @@ type Product struct {
 	Description string `json:"Description" example:"Berenang"`
 	Price       int
 	Order       []Order `gorm:"many2many:ProductOrder;"`
+	Created_at  time.Time
 }
 
 type Order struct {

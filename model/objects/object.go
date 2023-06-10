@@ -1,5 +1,7 @@
 package objects
 
+import "time"
+
 type Response struct {
 	Code    string      `json:"code" example:"00"`
 	Message string      `json:"message" example:"Succesful"`
@@ -36,6 +38,7 @@ type Product struct {
 	Description string `json:"Description" example:"Berenang"`
 	Price       int
 	Order       []Order `gorm:"many2many:ProductOrder;"`
+	Created_at  time.Time
 }
 
 type Order struct {
@@ -49,10 +52,4 @@ type ShoppingCart struct {
 	Quantity  int
 	SellerID  int
 	ProductID int
-}
-
-type Pagination struct {
-	Size int    `json:"size"`
-	Page int    `json:"page"`
-	Sort string `json:"sort"`
 }

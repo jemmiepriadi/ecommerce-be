@@ -2,6 +2,7 @@ package main
 
 import (
 	"ecommerce/controller/auth"
+	"ecommerce/controller/products"
 	"ecommerce/model"
 	"fmt"
 	"net/http"
@@ -72,6 +73,15 @@ var res = Response{
 	Message: "Success",
 }
 
+type Pagination struct {
+	Size       int         `json:"size,omitempty" query:"size"`
+	Page       int         `json:"page,omitempty" query:"page"`
+	Sort       string      `json:"sort,omitempty" query:"sort"`
+	TotalData  int64       `json:"total_data"`
+	TotalPages int         `json:"total_pages"`
+	Data       interface{} `json:"data"`
+}
+
 func main() {
 	fmt.Println("hahahah")
 	r := gin.Default()
@@ -84,6 +94,9 @@ func main() {
 	public := r.Group("/api")
 	orders := public.Group("/orders")
 	orders.GET("/", func(ctx *gin.Context) { ctx.JSON(http.StatusOK, gin.H{"haha": "haha"}) })
+
+	product := public.Group("/products")
+	product.GET("/", products.GetAllProducts)
 	//auth
 	authRoute := public.Group("/auth")
 	authRoute.GET("/")
