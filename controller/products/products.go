@@ -20,6 +20,8 @@ func PaginateProduct(product *model.Product, pagination *paginations.Pagination,
 
 	var result *gorm.DB
 
+	queryBuilder := model.DB.Offset(pagination.GetOffset()).Limit(pagination.GetSize()).Order(pagination.GetSort())
+
 	//find By Id
 	if c.Query("id") != "" {
 		id, err := strconv.Atoi(c.Query("id"))
@@ -27,12 +29,12 @@ func PaginateProduct(product *model.Product, pagination *paginations.Pagination,
 			msg := err
 			return nil, msg
 		}
-		result = model.DB.Model(&model.Product{}).Where("ID = ?", id).Find(&Products)
+		result = queryBuilder.Model(&model.Product{}).Where("ID = ?", id).Find(&Products)
 		if result.Error != nil {
 			msg := result.Error
 			return nil, msg
 		}
-		model.DB.Model(&result).Count(&totalData)
+		model.DB.Model(&Products).Count(&totalData)
 
 		pagination.TotalData = totalData
 		totalPages := int(math.Ceil(float64(totalData) / float64(pagination.Size)))
@@ -48,12 +50,12 @@ func PaginateProduct(product *model.Product, pagination *paginations.Pagination,
 			msg := err
 			return nil, msg
 		}
-		result = model.DB.Model(&model.Product{}).Where("SellerID = ?", id).Find(&Products)
+		result = queryBuilder.Model(&model.Product{}).Where("SellerID = ?", id).Find(&Products)
 		if result.Error != nil {
 			msg := result.Error
 			return nil, msg
 		}
-		model.DB.Model(&result).Count(&totalData)
+		model.DB.Model(&Products).Count(&totalData)
 
 		pagination.TotalData = totalData
 		totalPages := int(math.Ceil(float64(totalData) / float64(pagination.Size)))
@@ -67,8 +69,6 @@ func PaginateProduct(product *model.Product, pagination *paginations.Pagination,
 	pagination.TotalData = totalData
 	totalPages := int(math.Ceil(float64(totalData) / float64(pagination.Size)))
 	pagination.TotalPages = totalPages
-
-	queryBuilder := model.DB.Offset(pagination.GetOffset()).Limit(pagination.GetSize()).Order(pagination.GetSort())
 
 	//check if searched by name
 	if c.Query("name") != "" {

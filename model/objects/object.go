@@ -59,11 +59,20 @@ type Product struct {
 type Order struct {
 	ConsumerID int
 	SellerID   int
-	Product    []Product `gorm:"many2many:ProductOrder;"`
+	Product    []Product
 	Status     bool
 	CreatedAt  time.Time
 	UpdatedAt  time.Time
 	DeletedAt  gorm.DeletedAt
+}
+
+type Checkout struct {
+	Quantity   int
+	SellerID   int
+	ConsumerID int
+	Product    []Product
+	Status     bool
+	OrderID    int
 }
 
 type ShoppingCart struct {

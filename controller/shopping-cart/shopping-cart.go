@@ -19,13 +19,16 @@ func GetShoppingCart(c *gin.Context) {
 	var ShoppingCarts []model.ShoppingCart
 	var res objects.Response
 
+	queryBuilder := model.DB.Offset(pagination.GetOffset()).Limit(pagination.GetSize()).Order(pagination.GetSort())
+
 	var result *gorm.DB
-	if c.Query("consumerID") != "" {
+	if c.Query("consumerID") != "" && c.Query("sellerID") == "" {
 		id, err := strconv.Atoi(c.Query("SellerID"))
 		if err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err})
 		}
-		result = model.DB.Model(&model.ShoppingCart{}).Where("ID = ?", id).Find(&ShoppingCarts)
+		pagination.Sort = "SellerID asc"
+		result = queryBuilder.Model(&model.ShoppingCart{}).Where("ID = ?", id).Find(&ShoppingCarts)
 		if result.Error != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		}

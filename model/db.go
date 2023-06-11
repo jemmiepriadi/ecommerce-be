@@ -94,3 +94,8 @@ type ShoppingCart struct {
 	UpdatedAt  time.Time
 	DeletedAt  gorm.DeletedAt `gorm:"index"`
 }
+
+type ProductOrder struct {
+	ProductID int `gorm:"primaryKey"`
+	OrderID   int `gorm:"primaryKey"`
+}
