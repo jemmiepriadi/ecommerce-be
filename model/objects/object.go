@@ -1,6 +1,10 @@
 package objects
 
-import "time"
+import (
+	"time"
+
+	"gorm.io/gorm"
+)
 
 type Response struct {
 	Code    string      `json:"code" example:"00"`
@@ -16,12 +20,18 @@ type Account struct {
 	Password    string
 	Consumer    Consumer
 	Seller      Seller
+	CreatedAt   time.Time
+	UpdatedAt   time.Time
+	DeletedAt   gorm.DeletedAt
 }
 
 type Consumer struct {
 	Name      string
 	AccountID int
 	Order     []Order
+	CreatedAt time.Time
+	UpdatedAt time.Time
+	DeletedAt gorm.DeletedAt
 }
 
 type Seller struct {
@@ -29,6 +39,9 @@ type Seller struct {
 	AccountID int
 	Product   []Product `json:"Products" gorm:"foreignkey:SellerID"`
 	Order     []Order
+	CreatedAt time.Time
+	UpdatedAt time.Time
+	DeletedAt gorm.DeletedAt
 }
 
 type Product struct {
@@ -38,7 +51,9 @@ type Product struct {
 	Description string `json:"Description" example:"Berenang"`
 	Price       int
 	Order       []Order `gorm:"many2many:ProductOrder;"`
-	Created_at  time.Time
+	CreatedAt   time.Time
+	UpdatedAt   time.Time
+	DeletedAt   gorm.DeletedAt
 }
 
 type Order struct {
@@ -46,10 +61,16 @@ type Order struct {
 	SellerID   int
 	Product    []Product `gorm:"many2many:ProductOrder;"`
 	Status     bool
+	CreatedAt  time.Time
+	UpdatedAt  time.Time
+	DeletedAt  gorm.DeletedAt
 }
 
 type ShoppingCart struct {
 	Quantity  int
 	SellerID  int
 	ProductID int
+	CreatedAt time.Time
+	UpdatedAt time.Time
+	DeletedAt gorm.DeletedAt
 }

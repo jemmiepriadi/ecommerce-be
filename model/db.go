@@ -34,6 +34,9 @@ type Account struct {
 	Password    string
 	Consumer    Consumer
 	Seller      Seller
+	CreatedAt   time.Time
+	UpdatedAt   time.Time
+	DeletedAt   gorm.DeletedAt `gorm:"index"`
 }
 
 type Consumer struct {
@@ -41,6 +44,9 @@ type Consumer struct {
 	Name      string
 	AccountID int
 	Order     []Order
+	CreatedAt time.Time
+	UpdatedAt time.Time
+	DeletedAt gorm.DeletedAt `gorm:"index"`
 }
 
 type Seller struct {
@@ -49,6 +55,9 @@ type Seller struct {
 	AccountID int
 	Product   []Product `json:"Products" gorm:"foreignkey:SellerID"`
 	Order     []Order
+	CreatedAt time.Time
+	UpdatedAt time.Time
+	DeletedAt gorm.DeletedAt `gorm:"index"`
 }
 
 type Product struct {
@@ -58,8 +67,10 @@ type Product struct {
 	Image       string
 	Description string `json:"Description" example:"Berenang"`
 	Price       int
-	Order       []Order `gorm:"many2many:ProductOrder;"`
-	Created_at  time.Time
+	Order       []Order        `gorm:"many2many:ProductOrder;"`
+	CreatedAt   time.Time      `json:"CreatedAt"`
+	UpdatedAt   time.Time      `json:"UpdatedAt"`
+	DeletedAt   gorm.DeletedAt `gorm:"index"`
 }
 
 type Order struct {
@@ -68,6 +79,9 @@ type Order struct {
 	SellerID   int
 	Product    []Product `gorm:"many2many:ProductOrder;"`
 	Status     bool
+	CreatedAt  time.Time      `json:"CreatedAt"`
+	UpdatedAt  time.Time      `json:"UpdatedAt"`
+	DeletedAt  gorm.DeletedAt `gorm:"index"`
 }
 
 type ShoppingCart struct {
@@ -75,4 +89,7 @@ type ShoppingCart struct {
 	Quantity  int
 	SellerID  int
 	ProductID int
+	CreatedAt time.Time
+	UpdatedAt time.Time
+	DeletedAt gorm.DeletedAt `gorm:"index"`
 }

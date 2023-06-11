@@ -49,7 +49,7 @@ func PostRegister(c *gin.Context) {
 	req.Password = string(pass)
 
 	res.Data = req
-	if err := model.DB.Create(&req); err != nil {
+	if err := model.DB.Create(&req); err.Error != nil {
 		res.Message = "Username already exists"
 		res.Data = nil
 		c.JSON(http.StatusBadRequest, res)
@@ -77,7 +77,14 @@ func Auth() gin.HandlerFunc {
 		if header == "" {
 			ctx.JSON(http.StatusUnauthorized, gin.H{"error": "request does not contain an access token"})
 			ctx.Abort()
+			return
 		}
+		if err := ValidateToken(header); err != nil {
+			ctx.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
+			ctx.Abort()
+			return
+		}
+		ctx.Next()
 	}
 }
 
