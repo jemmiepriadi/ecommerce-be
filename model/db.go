@@ -32,6 +32,7 @@ type Account struct {
 	PhoneNumber string `json:"PhoneNumber"`
 	Username    string `gorm:"unique;not null"`
 	Password    string `gorm:"not null"`
+	Address     string
 	Consumer    Consumer
 	Seller      Seller
 	CreatedAt   time.Time

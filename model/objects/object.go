@@ -26,6 +26,7 @@ type Account struct {
 }
 
 type Consumer struct {
+	ID        int
 	Name      string
 	AccountID int
 	Order     []Order
@@ -35,6 +36,7 @@ type Consumer struct {
 }
 
 type Seller struct {
+	ID        int
 	Name      string `json:"Name" example:"Jemmi"`
 	AccountID int
 	Product   []Product `json:"Products" gorm:"foreignkey:SellerID"`
@@ -82,4 +84,19 @@ type ShoppingCart struct {
 	CreatedAt time.Time
 	UpdatedAt time.Time
 	DeletedAt gorm.DeletedAt
+}
+
+type UserData struct {
+	UserID      int
+	Name        string
+	Seller      Seller   `json:"omitempty"`
+	Username    string   `json:"omitempty"`
+	PhoneNumber string   `json:"omitempty"`
+	Address     string   `json:"omitempty"`
+	Consumer    Consumer `json:"omitempty"`
+	UserType    string   `json:"omitempty"`
+}
+
+type JWT struct {
+	JWT string
 }

@@ -25,6 +25,64 @@ type JWTClaim struct {
 }
 
 func Me(c *gin.Context) {
+	var signedToken objects.JWT
+	if err := c.ShouldBindJSON(&signedToken); err != nil {
+		fmt.Println("Failed to parse request to profile struct: ", err)
+		res.Code = "02"
+		res.Message = "Failed parsing request"
+
+		c.JSON(http.StatusBadRequest, res)
+		return
+	}
+	token, err := jwt.ParseWithClaims(
+		signedToken.JWT,
+		&JWTClaim{},
+		func(token *jwt.Token) (interface{}, error) {
+			return []byte("secretjemmi"), nil
+		},
+	)
+	if err != nil {
+		return
+	}
+	claims, ok := token.Claims.(*JWTClaim)
+	if !ok {
+		c.JSON(http.StatusBadRequest, gin.H{"message": "couldn't parse claims"})
+		return
+	}
+	if claims.ExpiresAt < time.Now().Local().Unix() {
+		c.JSON(http.StatusBadRequest, gin.H{"message": "token expired"})
+		return
+	}
+
+	user := &model.Account{}
+	if err := model.DB.Where("username = ?", claims.Username).First(user).Error; err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"message": "Username not found"})
+		return
+	}
+	var seller objects.Seller
+	var consumer objects.Consumer
+	var userData objects.UserData
+
+	if user.UserType == "seller" {
+		if err := model.DB.Model(&model.Seller{}).Where("account_id = ?", user.ID).First(&seller).Error; err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"message": "Username not found"})
+			return
+		}
+		userData.Seller = seller
+	} else if user.UserType == "consumer" {
+		if err := model.DB.Model(&model.Consumer{}).Where("account_id = ?", user.ID).First(&consumer).Error; err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"message": "Username not found"})
+			return
+		}
+		userData.Consumer = consumer
+	}
+	userData.Address = user.Address
+	userData.PhoneNumber = user.PhoneNumber
+	userData.Name = claims.Name
+	userData.Username = claims.Username
+	userData.UserType = user.UserType
+	res.Data = userData
+	c.JSON(http.StatusOK, res)
 }
 
 func PostRegister(c *gin.Context) {
