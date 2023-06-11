@@ -5,6 +5,7 @@ import (
 	"ecommerce/model/objects"
 	deletedata "ecommerce/utils/deleteData"
 	"ecommerce/utils/paginations"
+	"fmt"
 	"math"
 	"net/http"
 	"strconv"
@@ -99,17 +100,53 @@ func GetAllProducts(c *gin.Context) {
 	c.JSON(http.StatusOK, res)
 }
 
+func PostProduct(c *gin.Context) {
+	var req model.Product
+	res := objects.Response{}
+	if err := c.ShouldBindJSON(&req); err != nil {
+		fmt.Println("Failed to parse request to struct: ", err)
+		res.Code = "02"
+		res.Message = "Failed parsing request"
+
+		c.JSON(http.StatusBadRequest, res)
+		return
+	}
+	if result := model.DB.Create(&req); result.Error != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": result.Error})
+	}
+	res.Message = "Create Successful"
+	c.JSON(http.StatusBadRequest, res)
+}
+
 func UpdateProduct(c *gin.Context) {
+	var product []model.Product
+	var req model.Product
+	res := objects.Response{}
 	id, err := strconv.Atoi(c.Query("id"))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"error": err,
 		})
 	}
-	if err := model.DB.Model(object).Where("ID = ?", id).Find(&data); err != nil {
+	if err := model.DB.Model(&model.Product{}).Where("ID = ?", id).Find(&product); err != nil || len(product) == 0 {
 		res.Message = "Data not found!"
-		return res
+		c.JSON(http.StatusBadRequest, res)
+		return
 	}
+	if err := c.ShouldBindJSON(&req); err != nil {
+		fmt.Println("Failed to parse request to struct: ", err)
+		res.Code = "02"
+		res.Message = "Failed parsing request"
+
+		c.JSON(http.StatusBadRequest, res)
+		return
+	}
+	req.ID = product[0].ID
+	if result := model.DB.Save(&req); result.Error != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": result.Error})
+	}
+	res.Message = "Create Successful"
+	c.JSON(http.StatusBadRequest, res)
 }
 
 func DeleteProduct(c *gin.Context) {

@@ -31,7 +31,6 @@ func main() {
 	shoppingCart.Use(auth.Auth())
 	shoppingCart.GET("/", shoppingcart.PostShoppingCart)
 	shoppingCart.POST("/create", shoppingcart.PostShoppingCart)
-	shoppingCart.PUT("/update", shoppingcart.UpdateShoppingCart)
 
 	//auth
 	authRoute := public.Group("/auth")
