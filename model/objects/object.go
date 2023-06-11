@@ -61,7 +61,7 @@ type Product struct {
 type Order struct {
 	ConsumerID int
 	SellerID   int
-	Product    []Product
+	Product    []Product `gorm:"many2many:ProductOrder;"`
 	Status     bool
 	CreatedAt  time.Time
 	UpdatedAt  time.Time
@@ -89,12 +89,12 @@ type ShoppingCart struct {
 type UserData struct {
 	UserID      int
 	Name        string
-	Seller      Seller   `json:"omitempty"`
-	Username    string   `json:"omitempty"`
-	PhoneNumber string   `json:"omitempty"`
-	Address     string   `json:"omitempty"`
-	Consumer    Consumer `json:"omitempty"`
-	UserType    string   `json:"omitempty"`
+	Seller      *Seller
+	Username    string
+	PhoneNumber string
+	Address     string
+	Consumer    *Consumer
+	UserType    string
 }
 
 type JWT struct {

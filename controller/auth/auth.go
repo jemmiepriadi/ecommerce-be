@@ -26,14 +26,7 @@ type JWTClaim struct {
 
 func Me(c *gin.Context) {
 	var signedToken objects.JWT
-	if err := c.ShouldBindJSON(&signedToken); err != nil {
-		fmt.Println("Failed to parse request to profile struct: ", err)
-		res.Code = "02"
-		res.Message = "Failed parsing request"
-
-		c.JSON(http.StatusBadRequest, res)
-		return
-	}
+	signedToken.JWT = c.Query("JWT")
 	token, err := jwt.ParseWithClaims(
 		signedToken.JWT,
 		&JWTClaim{},
@@ -59,8 +52,8 @@ func Me(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"message": "Username not found"})
 		return
 	}
-	var seller objects.Seller
-	var consumer objects.Consumer
+	var seller *objects.Seller
+	var consumer *objects.Consumer
 	var userData objects.UserData
 
 	if user.UserType == "seller" {
@@ -77,6 +70,7 @@ func Me(c *gin.Context) {
 		userData.Consumer = consumer
 	}
 	userData.Address = user.Address
+	userData.UserID = user.ID
 	userData.PhoneNumber = user.PhoneNumber
 	userData.Name = claims.Name
 	userData.Username = claims.Username
@@ -140,6 +134,7 @@ func PostRegister(c *gin.Context) {
 func Auth() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		header := ctx.GetHeader("Authorization")
+		fmt.Println(header + "hahaha")
 		if header == "" {
 			ctx.JSON(http.StatusUnauthorized, gin.H{"error": "request does not contain an access token"})
 			ctx.Abort()
@@ -163,7 +158,8 @@ func Login(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, res)
 		return
 	}
-	response := FindUser(user.Username, user.Password)
+	response := FindUser(user.Username, user.Password, c)
+
 	c.JSON(http.StatusOK, response)
 }
 
@@ -190,7 +186,7 @@ func ValidateToken(signedToken string) (err error) {
 	return
 }
 
-func FindUser(username, password string) map[string]interface{} {
+func FindUser(username, password string, c *gin.Context) map[string]interface{} {
 	user := &model.Account{}
 	if err := model.DB.Where("username = ?", username).First(user).Error; err != nil {
 		var resp = map[string]interface{}{"status": false, "message": "Username not found"}
@@ -218,8 +214,51 @@ func FindUser(username, password string) map[string]interface{} {
 		fmt.Println(error)
 	}
 
+	var seller *objects.Seller
+	var consumer *objects.Consumer
+	var userData objects.UserData
+
+	if user.UserType == "seller" {
+		if err := model.DB.Model(&model.Seller{}).Where("account_id = ?", user.ID).First(&seller).Error; err != nil {
+			var resp = map[string]interface{}{"status": false, "message": "Username not found"}
+			return resp
+		}
+		userData.Seller = seller
+	} else if user.UserType == "consumer" {
+		if err := model.DB.Model(&model.Consumer{}).Where("account_id = ?", user.ID).First(&consumer).Error; err != nil {
+			var resp = map[string]interface{}{"status": false, "message": "Username not found"}
+			return resp
+		}
+		userData.Consumer = consumer
+	}
+	userData.Address = user.Address
+	userData.UserID = user.ID
+	userData.PhoneNumber = user.PhoneNumber
+	userData.Name = claim.Name
+	userData.Username = claim.Username
+	userData.UserType = user.UserType
+	res.Data = userData
+
 	var resp = map[string]interface{}{"status": false, "message": "logged in"}
 	resp["token"] = tokenString //Store the token in the response
-	resp["user"] = user
+	resp["user"] = res.Data
+	c.SetCookie("auth_token", tokenString, 3600, "/", "localhost", false, true)
+
 	return resp
+}
+
+func CORSMiddleware() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		c.Writer.Header().Set("Access-Control-Allow-Origin", "*")
+		c.Writer.Header().Set("Access-Control-Allow-Credentials", "true")
+		c.Writer.Header().Set("Access-Control-Allow-Headers", "Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization, accept, origin, Cache-Control, X-Requested-With")
+		c.Writer.Header().Set("Access-Control-Allow-Methods", "POST, OPTIONS, GET, PUT, DELETE")
+
+		if c.Request.Method == "OPTIONS" {
+			c.AbortWithStatus(204)
+			return
+		}
+
+		c.Next()
+	}
 }

@@ -21,6 +21,8 @@ func main() {
 			"message": "pong",
 		})
 	})
+
+	r.Use(auth.CORSMiddleware())
 	model.ConnectDataBase()
 	public := r.Group("/api")
 
@@ -47,7 +49,7 @@ func main() {
 	//auth
 	authRoute := public.Group("/auth")
 	authRoute.GET("/")
-	authRoute.GET("/me")
+	authRoute.GET("/me", auth.Me)
 	authRoute.POST("/login", auth.Login)
 	authRoute.POST("/register", auth.PostRegister)
 	r.Run(":8080")
