@@ -3,6 +3,7 @@ package products
 import (
 	"ecommerce/model"
 	"ecommerce/model/objects"
+	deletedata "ecommerce/utils/deleteData"
 	"ecommerce/utils/paginations"
 	"math"
 	"net/http"
@@ -13,13 +14,9 @@ import (
 )
 
 func PaginateProduct(product *model.Product, pagination *paginations.Pagination, c *gin.Context) (*paginations.Pagination, error) {
-	var totalRows int64
+	var totalData int64
 	var Products []model.Product
-	model.DB.Model(&Products).Count(&totalRows)
 
-	pagination.TotalRows = totalRows
-	totalPages := int(math.Ceil(float64(totalRows) / float64(pagination.Size)))
-	pagination.TotalPages = totalPages
 	var result *gorm.DB
 
 	//find By Id
@@ -34,20 +31,41 @@ func PaginateProduct(product *model.Product, pagination *paginations.Pagination,
 			msg := result.Error
 			return nil, msg
 		}
+		model.DB.Model(&result).Count(&totalData)
+
+		pagination.TotalData = totalData
+		totalPages := int(math.Ceil(float64(totalData) / float64(pagination.Size)))
+		pagination.TotalPages = totalPages
 		pagination.Data = Products
 		return pagination, nil
 	}
 
 	//findBySeller
 	if c.Query("sellerID") != "" {
-		result = model.DB.Model(&model.Product{}).Where("SellerID = ?", c.Query("sellerID")).Find(&Products)
+		id, err := strconv.Atoi(c.Query("SellerID"))
+		if err != nil {
+			msg := err
+			return nil, msg
+		}
+		result = model.DB.Model(&model.Product{}).Where("SellerID = ?", id).Find(&Products)
 		if result.Error != nil {
 			msg := result.Error
 			return nil, msg
 		}
+		model.DB.Model(&result).Count(&totalData)
+
+		pagination.TotalData = totalData
+		totalPages := int(math.Ceil(float64(totalData) / float64(pagination.Size)))
+		pagination.TotalPages = totalPages
 		pagination.Data = Products
+
 		return pagination, nil
 	}
+	model.DB.Model(&Products).Count(&totalData)
+
+	pagination.TotalData = totalData
+	totalPages := int(math.Ceil(float64(totalData) / float64(pagination.Size)))
+	pagination.TotalPages = totalPages
 
 	queryBuilder := model.DB.Offset(pagination.GetOffset()).Limit(pagination.GetSize()).Order(pagination.GetSort())
 
@@ -78,5 +96,23 @@ func GetAllProducts(c *gin.Context) {
 	}
 	res.Data = pagination
 	res.Message = "Success"
+	c.JSON(http.StatusOK, res)
+}
+
+func UpdateProduct(c *gin.Context) {
+	id, err := strconv.Atoi(c.Query("id"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": err,
+		})
+	}
+	if err := model.DB.Model(object).Where("ID = ?", id).Find(&data); err != nil {
+		res.Message = "Data not found!"
+		return res
+	}
+}
+
+func DeleteProduct(c *gin.Context) {
+	res := deletedata.DeleteItem(&model.Product{}, c)
 	c.JSON(http.StatusOK, res)
 }

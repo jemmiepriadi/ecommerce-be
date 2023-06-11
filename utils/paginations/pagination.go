@@ -10,7 +10,7 @@ type Pagination struct {
 	Size       int         `json:"size,omitempty" query:"size"`
 	Page       int         `json:"page,omitempty" query:"page"`
 	Sort       string      `json:"sort,omitempty" query:"sort"`
-	TotalRows  int64       `json:"total_rows"`
+	TotalData  int64       `json:"total_rows"`
 	TotalPages int         `json:"total_pages"`
 	Data       interface{} `json:"data"`
 }

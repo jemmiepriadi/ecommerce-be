@@ -3,84 +3,13 @@ package main
 import (
 	"ecommerce/controller/auth"
 	"ecommerce/controller/products"
+	shoppingcart "ecommerce/controller/shopping-cart"
 	"ecommerce/model"
 	"fmt"
 	"net/http"
 
-	"github.com/dgrijalva/jwt-go"
 	"github.com/gin-gonic/gin"
 )
-
-type Response struct {
-	Code    string      `json:"code" example:"00"`
-	Message string      `json:"message" example:"Succesful"`
-	Data    interface{} `json:"data"`
-}
-
-type Account struct {
-	Name        string `json:"Name" example:"Jemmi"`
-	UserType    string `json:"UserType" example:"seller"`
-	PhoneNumber string `json:"PhoneNumber"`
-	Username    string
-	Password    string
-	Consumer    Consumer
-	Seller      Seller
-}
-
-type Consumer struct {
-	Name      string
-	AccountID int
-	Order     []Order
-}
-
-type Seller struct {
-	Name      string `json:"Name" example:"Jemmi"`
-	AccountID int
-	Product   []Product `json:"Products" gorm:"foreignkey:SellerID"`
-	Order     []Order
-}
-
-type Product struct {
-	SellerID    int
-	Name        string
-	Image       string
-	Description string `json:"Description" example:"Berenang"`
-	Price       int
-	Order       []Order `gorm:"many2many:ProductOrder;"`
-}
-
-type Order struct {
-	ConsumerID int
-	SellerID   int
-	Product    []Product `gorm:"many2many:ProductOrder;"`
-	Status     bool
-}
-
-type ShoppingCart struct {
-	Quantity  int
-	SellerID  int
-	ProductID int
-}
-
-type JWTClaim struct {
-	Username string `json:"username"`
-	Name     string `json:"name"`
-	jwt.StandardClaims
-}
-
-var res = Response{
-	Code:    "00",
-	Message: "Success",
-}
-
-type Pagination struct {
-	Size       int         `json:"size,omitempty" query:"size"`
-	Page       int         `json:"page,omitempty" query:"page"`
-	Sort       string      `json:"sort,omitempty" query:"sort"`
-	TotalData  int64       `json:"total_data"`
-	TotalPages int         `json:"total_pages"`
-	Data       interface{} `json:"data"`
-}
 
 func main() {
 	fmt.Println("hahahah")
@@ -97,6 +26,13 @@ func main() {
 
 	product := public.Group("/products")
 	product.GET("/", products.GetAllProducts)
+
+	shoppingCart := public.Group("/shoppingcart")
+	shoppingCart.Use(auth.Auth())
+	shoppingCart.GET("/", shoppingcart.PostShoppingCart)
+	shoppingCart.POST("/create", shoppingcart.PostShoppingCart)
+	shoppingCart.PUT("/update", shoppingcart.UpdateShoppingCart)
+
 	//auth
 	authRoute := public.Group("/auth")
 	authRoute.GET("/")

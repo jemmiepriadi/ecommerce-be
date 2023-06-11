@@ -49,12 +49,14 @@ func PostRegister(c *gin.Context) {
 	req.Password = string(pass)
 
 	res.Data = req
-	if err := model.DB.Create(&req); err.Error != nil {
+	if err := model.DB.Save(&req); err.Error != nil {
 		res.Message = "Username already exists"
 		res.Data = nil
 		c.JSON(http.StatusBadRequest, res)
 		return
 	}
+
+	res.Message = "Account successfully created"
 	if req.UserType != "" {
 		if req.UserType == "seller" {
 			var seller model.Seller

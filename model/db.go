@@ -20,7 +20,7 @@ func ConnectDataBase() {
 		panic("Failed to connect to database!")
 	}
 
-	database.AutoMigrate(&Account{}, &Seller{}, &Product{})
+	database.AutoMigrate(&Account{}, &Seller{}, &Consumer{}, &Product{}, &Order{}, &ShoppingCart{})
 
 	DB = database
 }
@@ -30,8 +30,8 @@ type Account struct {
 	Name        string `json:"Name" example:"Jemmi"`
 	UserType    string `json:"UserType" example:"seller"`
 	PhoneNumber string `json:"PhoneNumber"`
-	Username    string `gorm:"unique"`
-	Password    string
+	Username    string `gorm:"unique;not null"`
+	Password    string `gorm:"not null"`
 	Consumer    Consumer
 	Seller      Seller
 	CreatedAt   time.Time
@@ -40,13 +40,14 @@ type Account struct {
 }
 
 type Consumer struct {
-	ID        int
-	Name      string
-	AccountID int
-	Order     []Order
-	CreatedAt time.Time
-	UpdatedAt time.Time
-	DeletedAt gorm.DeletedAt `gorm:"index"`
+	ID           int
+	Name         string
+	AccountID    int
+	ShoppingCart []ShoppingCart
+	Order        []Order
+	CreatedAt    time.Time
+	UpdatedAt    time.Time
+	DeletedAt    gorm.DeletedAt `gorm:"index"`
 }
 
 type Seller struct {
@@ -85,11 +86,11 @@ type Order struct {
 }
 
 type ShoppingCart struct {
-	ID        int
-	Quantity  int
-	SellerID  int
-	ProductID int
-	CreatedAt time.Time
-	UpdatedAt time.Time
-	DeletedAt gorm.DeletedAt `gorm:"index"`
+	ID         int
+	Quantity   int
+	ConsumerID int
+	ProductID  int
+	CreatedAt  time.Time
+	UpdatedAt  time.Time
+	DeletedAt  gorm.DeletedAt `gorm:"index"`
 }
