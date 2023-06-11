@@ -53,9 +53,13 @@ func PostShoppingCart(c *gin.Context) {
 		c.AbortWithError(400, err)
 		return
 	}
-	consumerID, err := strconv.Atoi(c.Query("consumerID"))
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err})
+	var consumerID int
+	if c.Query("consumerID") != "" {
+		consumerID, err = strconv.Atoi(c.Query("consumerID"))
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": err})
+			return
+		}
 	}
 	result = model.DB.Where(&model.ShoppingCart{ConsumerID: consumerID}).Find(&shoppingCartsDB)
 	if result.Error != nil {
@@ -63,7 +67,7 @@ func PostShoppingCart(c *gin.Context) {
 	}
 	shoppingCartsDB = shoppingcarts
 	model.DB.Save(shoppingCartsDB)
-
+	c.JSON(http.StatusOK, gin.H{"message": "Cart Added"})
 }
 
 func DeleteShoppingCart(c *gin.Context) {

@@ -85,5 +85,35 @@ func CreateOrder(c *gin.Context) {
 }
 
 func UpdateOrder(c *gin.Context) {
+	var res objects.Response
+	var order objects.Order
+	var req model.Order
+	if err := c.ShouldBindJSON(&req); err != nil {
+		fmt.Println("Failed to parse request to struct: ", err)
+		res.Code = "02"
+		res.Message = "Failed parsing request"
 
+		c.JSON(http.StatusBadRequest, res)
+		return
+	}
+	id, err := strconv.Atoi(c.Query("id"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err})
+	}
+	if result := model.DB.Model(&req).Where("id =?", id).Find(&order); result.Error != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": result.Error,
+		})
+		return
+	}
+	order.Status = req.Status
+	if result := model.DB.Save(&order); result.Error != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": result.Error,
+		})
+		return
+	}
+	res.Data = order
+	res.Message = "succesfull create order"
+	c.JSON(http.StatusBadRequest, res)
 }
