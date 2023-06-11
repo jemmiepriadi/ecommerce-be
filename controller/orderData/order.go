@@ -19,6 +19,7 @@ func GetOrder(c *gin.Context) {
 	var totalData int64
 
 	var res objects.Response
+	pagination.Sort = "ConsumerID asc"
 	queryBuilder := model.DB.Offset(pagination.GetOffset()).Limit(pagination.GetSize()).Order(pagination.GetSort())
 
 	consumerID, err := strconv.Atoi(c.Query("consumerID"))

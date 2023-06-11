@@ -42,7 +42,7 @@ type Account struct {
 type Consumer struct {
 	ID           int
 	Name         string
-	AccountID    int
+	AccountID    int `gorm:"unique;not null"`
 	ShoppingCart []ShoppingCart
 	Order        []Order
 	CreatedAt    time.Time
@@ -52,8 +52,8 @@ type Consumer struct {
 
 type Seller struct {
 	ID        int
-	Name      string `json:"Name" example:"Jemmi"`
-	AccountID int
+	Name      string    `json:"Name" example:"Jemmi"`
+	AccountID int       `gorm:"unique;not null"`
 	Product   []Product `json:"Products" gorm:"foreignkey:SellerID"`
 	Order     []Order
 	CreatedAt time.Time

@@ -55,11 +55,17 @@ func PostRegister(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, res)
 		return
 	}
+	AccountID := req.ID
 
 	res.Message = "Account successfully created"
 	if req.UserType != "" {
 		if req.UserType == "seller" {
 			var seller model.Seller
+			result := model.DB.Model(&model.Seller{}).Where("account_id = ?", AccountID).Find(&seller)
+			if result.Error != nil {
+				c.JSON(http.StatusOK, gin.H{"error": err.Error()})
+				return
+			}
 			seller.Name = req.Name
 			seller.AccountID = req.ID
 			model.DB.Create(&seller)

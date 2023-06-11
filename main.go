@@ -4,6 +4,7 @@ import (
 	"ecommerce/controller/auth"
 	"ecommerce/controller/orderData"
 	"ecommerce/controller/products"
+	sellerdata "ecommerce/controller/sellerData"
 	shoppingcart "ecommerce/controller/shopping-cart"
 	"ecommerce/model"
 	"fmt"
@@ -22,14 +23,18 @@ func main() {
 	})
 	model.ConnectDataBase()
 	public := r.Group("/api")
+
+	seller := public.Group("/sellers")
+	seller.GET("/", sellerdata.GetSeller)
+
 	orders := public.Group("/orders")
 	orders.GET("/", orderData.GetOrder)
 
 	product := public.Group("/products")
 	product.GET("/", products.GetAllProducts)
-	product.POST("/create", products.PostProduct).Use(auth.Auth())
-	product.PUT("/update", products.UpdateProduct).Use(auth.Auth())
-	product.DELETE("/delete", products.DeleteProduct).Use(auth.Auth())
+	product.POST("/create", products.PostProduct)
+	product.PUT("/update", auth.Auth(), products.UpdateProduct)
+	product.DELETE("/delete", auth.Auth(), products.DeleteProduct)
 
 	shoppingCart := public.Group("/shoppingcart")
 	shoppingCart.Use(auth.Auth())
