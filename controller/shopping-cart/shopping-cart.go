@@ -16,29 +16,47 @@ import (
 func GetShoppingCart(c *gin.Context) {
 	var pagination = paginations.GeneratePaginationFromRequest(c)
 	var totalData int64
-	var ShoppingCarts []model.ShoppingCart
+	var ShoppingCarts []objects.ShoppingCart
 	var res objects.Response
+	var products []objects.Product
 
 	queryBuilder := model.DB.Offset(pagination.GetOffset()).Limit(pagination.GetSize()).Order(pagination.GetSort())
 
 	var result *gorm.DB
-	if c.Query("consumerID") != "" && c.Query("sellerID") == "" {
-		id, err := strconv.Atoi(c.Query("SellerID"))
-		if err != nil {
+	if c.Query("consumerID") != "" {
+
+		consumerID, err := strconv.Atoi(c.Query("sellerID"))
+		if err != nil && c.Query("sellerID") != "" {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err})
 		}
-		pagination.Sort = "SellerID asc"
-		result = queryBuilder.Model(&model.ShoppingCart{}).Where("ID = ?", id).Find(&ShoppingCarts)
+		pagination.Sort = "created_at asc"
+		result = queryBuilder.Model(&model.ShoppingCart{}).Where(&model.ShoppingCart{ConsumerID: consumerID}).Find(&ShoppingCarts)
 		if result.Error != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		}
+
+		result = queryBuilder.Model(&model.Product{}).Where(&model.ShoppingCart{ConsumerID: consumerID}).Find(&ShoppingCarts)
+		if result.Error != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		}
+
+		for _, value := range ShoppingCarts {
+			result = queryBuilder.Model(&model.ProductCart{}).Where(model.ProductCart{CartID: value.ID}).Find(&products)
+			if result.Error != nil || len(products) == 0 {
+				res.Message = "Data not found!"
+				c.JSON(http.StatusBadRequest, res)
+				return
+			}
+			value.Product = products
 		}
 		model.DB.Model(&result).Count(&totalData)
 
 		pagination.TotalData = totalData
 		totalPages := int(math.Ceil(float64(totalData) / float64(pagination.Size)))
 		pagination.TotalPages = totalPages
-		pagination.Data = ShoppingCarts
 	}
+	pagination.Data = ShoppingCarts
+
 	res.Data = pagination
 	c.JSON(http.StatusOK, res)
 }

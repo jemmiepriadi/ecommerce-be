@@ -78,12 +78,14 @@ type Checkout struct {
 }
 
 type ShoppingCart struct {
-	Quantity  int
-	SellerID  int
-	ProductID int
-	CreatedAt time.Time
-	UpdatedAt time.Time
-	DeletedAt gorm.DeletedAt
+	ID         int
+	Quantity   int
+	ConsumerID int
+	ProductID  int
+	Product    []Product
+	CreatedAt  time.Time
+	UpdatedAt  time.Time
+	DeletedAt  gorm.DeletedAt
 }
 
 type UserData struct {

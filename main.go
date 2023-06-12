@@ -23,6 +23,14 @@ func main() {
 	})
 
 	r.Use(auth.CORSMiddleware())
+	// r.Use(cors.New(cors.Config{
+	// 	AllowOrigins:     []string{"http://localhost:3000"},
+	// 	AllowMethods:     []string{"GET", "POST", "PUT", "PATCH", "DELETE", "HEAD"},
+	// 	AllowHeaders:     []string{"Origin", "Content-Length", "Content-Type", "Authorization"},
+	// 	ExposeHeaders:    []string{"Content-Length"},
+	// 	AllowCredentials: true,
+	// 	MaxAge:           12 * time.Hour,
+	// }))
 	model.ConnectDataBase()
 	public := r.Group("/api")
 
@@ -31,7 +39,7 @@ func main() {
 
 	orders := public.Group("/orders")
 	orders.GET("/", orderData.GetOrder)
-	orders.POST("/create", orderData.CreateOrder)
+	orders.POST("/", orderData.CreateOrder)
 	orders.PUT("/update", auth.Auth(), orderData.UpdateOrder)
 
 	product := public.Group("/products")
@@ -43,7 +51,7 @@ func main() {
 	shoppingCart := public.Group("/shoppingcart")
 	shoppingCart.Use(auth.Auth())
 	shoppingCart.GET("/", shoppingcart.PostShoppingCart)
-	shoppingCart.POST("/create", shoppingcart.PostShoppingCart)
+	shoppingCart.POST("/", shoppingcart.PostShoppingCart)
 	shoppingCart.DELETE("/delete", shoppingcart.DeleteShoppingCart)
 
 	//auth

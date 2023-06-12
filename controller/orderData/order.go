@@ -17,25 +17,38 @@ func GetOrder(c *gin.Context) {
 	var order []model.Order
 	var pagination = paginations.GeneratePaginationFromRequest(c)
 	var totalData int64
+	var products []model.Product
 
 	var res objects.Response
-	pagination.Sort = "ConsumerID asc"
-	queryBuilder := model.DB.Offset(pagination.GetOffset()).Limit(pagination.GetSize()).Order(pagination.GetSort())
 
+	pagination.Sort = "created_at asc"
 	consumerID, err := strconv.Atoi(c.Query("consumerID"))
-	if err != nil {
+	if err != nil && c.Query("consumerID") != "" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err})
 	}
 	sellerID, err := strconv.Atoi(c.Query("sellerID"))
-	if err != nil {
+	if err != nil && c.Query("sellerID") != "" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err})
 	}
+	queryBuilder := model.DB.Offset(pagination.GetOffset()).Limit(pagination.GetSize()).Order(pagination.GetSort())
+
 	result := queryBuilder.Model(&model.Order{}).Where(model.Order{ConsumerID: consumerID, SellerID: sellerID}).Find(&order)
 	if result.Error != nil || ((c.Query("consumerID") != "" || c.Query("sellerID") != "") && len(order) == 0) {
 		res.Message = "Data not found!"
 		c.JSON(http.StatusBadRequest, res)
 		return
 	}
+
+	for _, value := range order {
+		result = queryBuilder.Model(&model.ProductOrder{}).Where(model.ProductOrder{OrderID: value.ID}).Find(&products)
+		if result.Error != nil || len(products) == 0 {
+			res.Message = "Data not found!"
+			c.JSON(http.StatusBadRequest, res)
+			return
+		}
+		value.Product = products
+	}
+
 	model.DB.Model(&order).Count(&totalData)
 
 	pagination.TotalData = totalData

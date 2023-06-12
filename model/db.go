@@ -63,16 +63,17 @@ type Seller struct {
 }
 
 type Product struct {
-	ID          int
-	SellerID    int
-	Name        string
-	Image       string
-	Description string `json:"Description" example:"Berenang"`
-	Price       int
-	Order       []Order        `gorm:"many2many:ProductOrder;"`
-	CreatedAt   time.Time      `json:"CreatedAt"`
-	UpdatedAt   time.Time      `json:"UpdatedAt"`
-	DeletedAt   gorm.DeletedAt `gorm:"index"`
+	ID           int
+	SellerID     int
+	Name         string
+	Image        string
+	Description  string `json:"Description" example:"Berenang"`
+	Price        int
+	ShoppingCart []ShoppingCart `gorm:"many2many:ProductCart;"`
+	Order        []Order        `gorm:"many2many:ProductOrder;"`
+	CreatedAt    time.Time      `json:"CreatedAt"`
+	UpdatedAt    time.Time      `json:"UpdatedAt"`
+	DeletedAt    gorm.DeletedAt `gorm:"index"`
 }
 
 type Order struct {
@@ -90,7 +91,7 @@ type ShoppingCart struct {
 	ID         int
 	Quantity   int
 	ConsumerID int
-	ProductID  int
+	Product    []Product `gorm:"many2many:ProductCart;"`
 	CreatedAt  time.Time
 	UpdatedAt  time.Time
 	DeletedAt  gorm.DeletedAt `gorm:"index"`
@@ -99,4 +100,9 @@ type ShoppingCart struct {
 type ProductOrder struct {
 	ProductID int `gorm:"primaryKey"`
 	OrderID   int `gorm:"primaryKey"`
+}
+
+type ProductCart struct {
+	ProductID int `gorm:"primaryKey"`
+	CartID    int `gorm:"primaryKey"`
 }
