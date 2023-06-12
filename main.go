@@ -41,8 +41,8 @@ func main() {
 	product.DELETE("/delete", auth.Auth(), products.DeleteProduct)
 
 	shoppingCart := public.Group("/shoppingcart")
-	shoppingCart.Use(auth.Auth())
-	shoppingCart.GET("/", shoppingcart.PostShoppingCart)
+	// shoppingCart.Use(auth.Auth())
+	shoppingCart.GET("/", shoppingcart.GetShoppingCart)
 	shoppingCart.POST("/", shoppingcart.PostShoppingCart)
 	shoppingCart.DELETE("/delete", shoppingcart.DeleteShoppingCart)
 

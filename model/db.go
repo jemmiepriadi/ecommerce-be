@@ -19,6 +19,10 @@ func ConnectDataBase() {
 	if err != nil {
 		panic("Failed to connect to database!")
 	}
+	if err := database.SetupJoinTable(&ShoppingCart{}, "Product", &ProductCart{}); err != nil {
+		println(err.Error())
+		panic("Failed to setup join table")
+	}
 
 	database.AutoMigrate(&Account{}, &Seller{}, &Consumer{}, &Product{}, &Order{}, &ShoppingCart{})
 
@@ -69,6 +73,7 @@ type Product struct {
 	Image        string
 	Description  string `json:"Description" example:"Berenang"`
 	Price        int
+	Quantity     int
 	ShoppingCart []ShoppingCart `gorm:"many2many:ProductCart;"`
 	Order        []Order        `gorm:"many2many:ProductOrder;"`
 	CreatedAt    time.Time      `json:"CreatedAt"`
@@ -103,6 +108,7 @@ type ProductOrder struct {
 }
 
 type ProductCart struct {
-	ProductID int `gorm:"primaryKey"`
-	CartID    int `gorm:"primaryKey"`
+	ProductID      int `gorm:"primaryKey"`
+	ShoppingCartID int `gorm:"primaryKey"`
+	Quantity       int
 }
