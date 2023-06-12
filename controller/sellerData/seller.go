@@ -22,21 +22,22 @@ func GetSeller(c *gin.Context) {
 		return
 	}
 
-	var products model.Product
+	var products []model.Product
 	result = model.DB.Model(&model.Product{}).Where("seller_id = ?", seller[0].ID).Find(&products)
 	if result.Error != nil {
 		c.JSON(http.StatusOK, gin.H{"error": err.Error()})
 		return
 	}
+
 	var orders []model.Order
 	result = model.DB.Model(&model.Order{}).Where("seller_id = ?", seller[0].ID).Find(&orders)
 	if result.Error != nil {
 		c.JSON(http.StatusOK, gin.H{"error": err.Error()})
 		return
 	}
-	// seller[0].Product = products
+	seller[0].Product = products
 	seller[0].Order = orders
 	res := objects.Response{}
-	res.Data = products
+	res.Data = seller
 	c.JSON(http.StatusOK, res)
 }
