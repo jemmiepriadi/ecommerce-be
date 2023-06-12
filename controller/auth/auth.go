@@ -149,6 +149,10 @@ func Auth() gin.HandlerFunc {
 	}
 }
 
+func Validate(c *gin.Context) {
+	// header := c.GetHeader("Authorization")
+}
+
 func Login(c *gin.Context) {
 	var user model.Account
 	if err := c.ShouldBindJSON(&user); err != nil {

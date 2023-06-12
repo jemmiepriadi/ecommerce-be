@@ -31,7 +31,7 @@ func main() {
 
 	orders := public.Group("/orders")
 	orders.GET("/", orderData.GetOrder)
-	orders.POST("/", orderData.CreateOrder)
+	orders.POST("/", auth.Auth(), orderData.CreateOrder)
 	orders.PUT("/update", auth.Auth(), orderData.UpdateOrder)
 
 	product := public.Group("/products")
@@ -43,12 +43,13 @@ func main() {
 	shoppingCart := public.Group("/shoppingcart")
 	// shoppingCart.Use(auth.Auth())
 	shoppingCart.GET("/", shoppingcart.GetShoppingCart)
-	shoppingCart.POST("/", shoppingcart.PostShoppingCart)
+	shoppingCart.POST("", shoppingcart.PostShoppingCart)
 	shoppingCart.DELETE("/delete", shoppingcart.DeleteShoppingCart)
 
 	//auth
 	authRoute := public.Group("/auth")
 	authRoute.GET("/")
+	authRoute.GET("/validate")
 	authRoute.GET("/me", auth.Me)
 	authRoute.POST("/login", auth.Login)
 	authRoute.POST("/register", auth.PostRegister)

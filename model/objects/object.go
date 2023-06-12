@@ -51,6 +51,7 @@ type Product struct {
 	SellerID     int
 	Name         string
 	Image        string
+	SellerName   string
 	Description  string `json:"Description" example:"Berenang"`
 	Price        int
 	Quantity     int

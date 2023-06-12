@@ -21,6 +21,7 @@ func GetShoppingCart(c *gin.Context) {
 	var res objects.Response
 	var productCarts []model.ProductCart
 	var products objects.Product
+	var seller model.Seller
 
 	queryBuilder := model.DB.Offset(pagination.GetOffset()).Limit(pagination.GetSize()).Order(pagination.GetSort())
 
@@ -51,15 +52,24 @@ func GetShoppingCart(c *gin.Context) {
 		}
 		for _, value := range productCarts {
 
-			result = model.DB.Model(&model.Product{}).Where("ID = ?", value.ProductID).First(&products)
+			result = model.DB.Model(&model.Product{}).Where("ID = ?", value.ProductID).Select("id,seller_id,name,image,description,price,quantity,created_at,updated_at,deleted_at").First(&products)
 			if result.Error != nil {
 				res.Message = "Data not found!"
 				c.JSON(http.StatusBadRequest, res)
 				return
 			}
 			fmt.Println(value.ProductID)
-			fmt.Println(products.ID)
+			fmt.Println(products.SellerID)
 			products.Quantity = value.Quantity
+
+			result = model.DB.Model(&model.Seller{}).Where("ID = ?", products.SellerID).First(&seller)
+			if result.Error != nil {
+				res.Message = "Data not found!"
+				c.JSON(http.StatusBadRequest, res)
+				return
+			}
+
+			products.SellerName = seller.Name
 			shoppingCarts[0].Product = append(shoppingCarts[0].Product, products)
 		}
 
@@ -84,7 +94,7 @@ func PostShoppingCart(c *gin.Context) {
 	var res objects.Response
 	err := c.ShouldBindJSON(&shoppingcarts)
 	if err != nil {
-		c.AbortWithError(400, err)
+		c.JSON(http.StatusBadRequest, gin.H{"message": "cannot parse"})
 		return
 	}
 	var consumerID int
@@ -95,6 +105,7 @@ func PostShoppingCart(c *gin.Context) {
 			return
 		}
 	}
+	shoppingcarts.ConsumerID = consumerID
 	result = model.DB.Where(&model.ShoppingCart{ConsumerID: consumerID}).Find(&shoppingCartsDB)
 	if result.Error != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
