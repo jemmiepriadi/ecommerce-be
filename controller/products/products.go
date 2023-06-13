@@ -1,16 +1,23 @@
 package products
 
 import (
+	"context"
 	"ecommerce/model"
 	"ecommerce/model/objects"
 	deletedata "ecommerce/utils/deleteData"
 	"ecommerce/utils/paginations"
 	"fmt"
+	"log"
 	"math"
 	"net/http"
 	"strconv"
 
+	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/config"
+	"github.com/aws/aws-sdk-go-v2/feature/s3/manager"
+	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/gin-gonic/gin"
+	"github.com/joho/godotenv"
 	"gorm.io/gorm"
 )
 
@@ -101,6 +108,43 @@ func GetAllProducts(c *gin.Context) {
 }
 
 func PostProduct(c *gin.Context) {
+
+	file, _ := c.FormFile("image")
+	log.Println(file.Filename)
+
+	err := godotenv.Load()
+	if err != nil {
+		log.Fatal("Error loading .env file")
+	}
+
+	cfg, err := config.LoadDefaultConfig(context.TODO())
+	if err != nil {
+		log.Printf("error: %v", err)
+		return
+	}
+
+	client := s3.NewFromConfig(cfg)
+
+	f, err := file.Open()
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"message": "Failed to open the file"})
+		return
+	}
+
+	uploader := manager.NewUploader(client)
+	result, err := uploader.Upload(context.TODO(), &s3.PutObjectInput{
+		Bucket: aws.String("ecommerce-jemmi	"),
+		Key:    aws.String(file.Filename),
+		Body:   f,
+	})
+
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"message": "Failed to upload the file"})
+		return
+	}
+
+	image := result.Location
+
 	var req model.Product
 	res := objects.Response{}
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -111,6 +155,7 @@ func PostProduct(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, res)
 		return
 	}
+	req.Image = image
 	if result := model.DB.Create(&req); result.Error != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": result.Error})
 	}
