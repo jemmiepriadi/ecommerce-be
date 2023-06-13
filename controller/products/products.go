@@ -45,12 +45,12 @@ func PaginateProduct(product *model.Product, pagination *paginations.Pagination,
 
 	//findBySeller
 	if c.Query("sellerID") != "" {
-		id, err := strconv.Atoi(c.Query("SellerID"))
+		id, err := strconv.Atoi(c.Query("sellerID"))
 		if err != nil {
 			msg := err
 			return nil, msg
 		}
-		result = queryBuilder.Model(&model.Product{}).Where("SellerID = ?", id).Find(&Products)
+		result = queryBuilder.Model(&model.Product{}).Where("seller_id = ?", id).Find(&Products)
 		if result.Error != nil {
 			msg := result.Error
 			return nil, msg

@@ -90,6 +90,13 @@ func PostRegister(c *gin.Context) {
 		return
 	}
 
+	if req.Username == "" || req.Password == "" {
+		res.Code = ""
+		res.Message = "Password or Username cannot be empty"
+		c.JSON(http.StatusBadRequest, res)
+		return
+	}
+
 	pass, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
 	if err != nil {
 		fmt.Println(err)
