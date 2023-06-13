@@ -106,14 +106,25 @@ func GetAllProducts(c *gin.Context) {
 	c.JSON(http.StatusOK, res)
 }
 
-func PostProduct(c *gin.Context) {
+// type Form struct {
+// 	File *multipart.FileHeader `form:"file" binding:"required"`
+// }
 
-	file, _ := c.FormFile("image")
-	log.Println(file.Filename)
+func PostProduct(c *gin.Context) {
 
 	err := godotenv.Load()
 	if err != nil {
 		log.Fatal("Error loading .env file")
+	}
+	file, err := c.FormFile("image")
+
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"message": err})
+		return
+	}
+
+	if err := c.SaveUploadedFile(file, "assets/uploads/"+file.Filename); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"message": err})
 	}
 
 	cfg, err := config.LoadDefaultConfig(context.TODO())
@@ -132,14 +143,15 @@ func PostProduct(c *gin.Context) {
 
 	uploader := manager.NewUploader(client)
 	result, err := uploader.Upload(context.TODO(), &s3.PutObjectInput{
-		Bucket: aws.String("ecommerce-jemmi	"),
+		Bucket: aws.String("ecommerce-jemmi"),
 		Key:    aws.String(file.Filename),
 		Body:   f,
 		ACL:    "public-read",
 	})
 
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"message": "Failed to upload the file"})
+		fmt.Println(err)
+		c.JSON(http.StatusBadRequest, gin.H{"message": err})
 		return
 	}
 
@@ -147,15 +159,15 @@ func PostProduct(c *gin.Context) {
 
 	var req model.Product
 	res := objects.Response{}
-	if err := c.ShouldBindJSON(&req); err != nil {
-		fmt.Println("Failed to parse request to struct: ", err)
-		res.Code = "02"
-		res.Message = "Failed parsing request"
-
-		c.JSON(http.StatusBadRequest, res)
-		return
-	}
+	form, err := c.MultipartForm()
+	req.Name = form.Value["name"][0]
+	req.Description = form.Value["description"][0]
+	price, _ := strconv.Atoi(form.Value["price"][0])
+	req.Price = price
+	sellerID, _ := strconv.Atoi(form.Value["sellerID"][0])
+	req.SellerID = sellerID
 	req.Image = image
+	c.JSON(http.StatusBadRequest, req)
 	if result := model.DB.Create(&req); result.Error != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": result.Error})
 	}
@@ -216,6 +228,22 @@ func DeleteProduct(c *gin.Context) {
 	}
 
 	if result := model.DB.Delete(&product); result.Error != nil {
+		res.Message = "Delete Unsucessful"
+		res.Data = err.Error
+		c.JSON(http.StatusBadRequest, res)
+		return
+	}
+
+	//also remove people's carts because the product is deleted
+	var productCart []model.ProductCart
+	if err := model.DB.Model(&model.ProductCart{}).Where("product_id = ?", id).Find(&productCart); err.Error != nil {
+		res.Message = "Data not found!"
+		res.Data = err.Error
+		c.JSON(http.StatusBadRequest, res)
+		return
+	}
+
+	if result := model.DB.Delete(&productCart); result.Error != nil {
 		res.Message = "Delete Unsucessful"
 		res.Data = err.Error
 		c.JSON(http.StatusBadRequest, res)

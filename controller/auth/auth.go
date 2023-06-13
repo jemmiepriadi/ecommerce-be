@@ -141,7 +141,6 @@ func PostRegister(c *gin.Context) {
 func Auth() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		header := ctx.GetHeader("Authorization")
-		fmt.Println(header + "hahaha")
 		if header == "" {
 			ctx.JSON(http.StatusUnauthorized, gin.H{"error": "request does not contain an access token"})
 			ctx.Abort()

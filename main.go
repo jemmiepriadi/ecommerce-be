@@ -16,6 +16,7 @@ import (
 func main() {
 	fmt.Println("hahahah")
 	r := gin.Default()
+	r.Static("/assets", "./assets")
 	r.GET("/ping", func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{
 			"message": "pong",
@@ -36,7 +37,7 @@ func main() {
 
 	product := public.Group("/products")
 	product.GET("/", products.GetAllProducts)
-	product.POST("/create", auth.Auth(), products.PostProduct)
+	product.POST("/create", products.PostProduct)
 	product.PUT("/update", auth.Auth(), products.UpdateProduct)
 	product.DELETE("/delete", auth.Auth(), products.DeleteProduct)
 
