@@ -10,6 +10,7 @@ type Response struct {
 	Code    string      `json:"code" example:"00"`
 	Message string      `json:"message" example:"Succesful"`
 	Data    interface{} `json:"data"`
+	Error   string
 }
 
 type Account struct {

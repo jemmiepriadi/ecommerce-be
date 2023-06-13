@@ -123,10 +123,6 @@ func PostProduct(c *gin.Context) {
 		return
 	}
 
-	if err := c.SaveUploadedFile(file, "assets/uploads/"+file.Filename); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"message": err})
-	}
-
 	cfg, err := config.LoadDefaultConfig(context.TODO())
 	if err != nil {
 		log.Printf("error: %v", err)
@@ -159,23 +155,75 @@ func PostProduct(c *gin.Context) {
 
 	var req model.Product
 	res := objects.Response{}
-	form, err := c.MultipartForm()
-	req.Name = form.Value["name"][0]
-	req.Description = form.Value["description"][0]
-	price, _ := strconv.Atoi(form.Value["price"][0])
-	req.Price = price
-	sellerID, _ := strconv.Atoi(form.Value["sellerID"][0])
-	req.SellerID = sellerID
-	req.Image = image
-	c.JSON(http.StatusBadRequest, req)
+
+	var isBindFail bool
+	if err := c.ShouldBindJSON(&req); err != nil {
+		fmt.Println("Failed to parse request to struct: ", err)
+
+		res.Error = "Failed parsing request"
+		isBindFail = true
+	}
+	if isBindFail {
+		form, _ := c.MultipartForm()
+		req.Name = form.Value["name"][0]
+		req.Description = form.Value["description"][0]
+		price, _ := strconv.Atoi(form.Value["price"][0])
+		req.Price = price
+		sellerID, _ := strconv.Atoi(form.Value["sellerID"][0])
+		req.SellerID = sellerID
+		req.Image = image
+	}
+
 	if result := model.DB.Create(&req); result.Error != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": result.Error})
 	}
 	res.Message = "Create Successful"
-	c.JSON(http.StatusBadRequest, res)
+	c.JSON(http.StatusOK, res)
 }
 
 func UpdateProduct(c *gin.Context) {
+
+	err := godotenv.Load()
+	if err != nil {
+		log.Fatal("Error loading .env file")
+	}
+	file, err := c.FormFile("image")
+
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"message": err})
+		return
+	}
+
+	cfg, err := config.LoadDefaultConfig(context.TODO())
+	if err != nil {
+		log.Printf("error: %v", err)
+		return
+	}
+
+	client := s3.NewFromConfig(cfg)
+
+	f, err := file.Open()
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"message": "Failed to open the file"})
+		return
+	}
+
+	uploader := manager.NewUploader(client)
+	result, err := uploader.Upload(context.TODO(), &s3.PutObjectInput{
+		Bucket: aws.String("ecommerce-jemmi"),
+		Key:    aws.String(file.Filename),
+		Body:   f,
+		ACL:    "public-read",
+	})
+
+	if err != nil {
+		fmt.Println(err)
+		c.JSON(http.StatusBadRequest, gin.H{"message": err})
+		return
+	}
+
+	image := result.Location
+
 	var product model.Product
 	var req model.Product
 	res := objects.Response{}
@@ -187,14 +235,26 @@ func UpdateProduct(c *gin.Context) {
 		return
 	}
 
+	var isBindFail bool
 	if err := c.ShouldBindJSON(&req); err != nil {
 		fmt.Println("Failed to parse request to struct: ", err)
-		res.Code = "02"
-		res.Message = "Failed parsing request"
+		res.Error = "Failed parsing request"
+		isBindFail = true
 
-		c.JSON(http.StatusBadRequest, res)
-		return
 	}
+
+	if isBindFail {
+		form, _ := c.MultipartForm()
+
+		req.Name = form.Value["name"][0]
+		req.Description = form.Value["description"][0]
+		price, _ := strconv.Atoi(form.Value["price"][0])
+		req.Price = price
+		sellerID, _ := strconv.Atoi(form.Value["sellerID"][0])
+		req.SellerID = sellerID
+		req.Image = image
+	}
+
 	if err := model.DB.Table("products").Where("ID = ?", id).First(&product); err.Error != nil {
 		res.Message = "Data not found!"
 		res.Data = err.Error
@@ -207,7 +267,7 @@ func UpdateProduct(c *gin.Context) {
 	}
 	res.Message = "Update Succes"
 	res.Data = req
-	c.JSON(http.StatusBadRequest, res)
+	c.JSON(http.StatusOK, res)
 }
 
 func DeleteProduct(c *gin.Context) {

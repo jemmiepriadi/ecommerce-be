@@ -130,6 +130,11 @@ func PostRegister(c *gin.Context) {
 			model.DB.Create(&seller)
 		} else if req.UserType == "consumer" {
 			var consumer model.Consumer
+			result := model.DB.Model(&model.Consumer{}).Where("account_id = ?", AccountID).Find(&consumer)
+			if result.Error != nil {
+				c.JSON(http.StatusOK, gin.H{"error": err.Error()})
+				return
+			}
 			consumer.Name = req.Name
 			consumer.AccountID = req.ID
 			model.DB.Create(&consumer)
@@ -153,10 +158,6 @@ func Auth() gin.HandlerFunc {
 		}
 		ctx.Next()
 	}
-}
-
-func Validate(c *gin.Context) {
-	// header := c.GetHeader("Authorization")
 }
 
 func Login(c *gin.Context) {
