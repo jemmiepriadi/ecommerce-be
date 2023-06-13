@@ -111,4 +111,7 @@ type ProductCart struct {
 	ProductID      int `gorm:"primaryKey"`
 	ShoppingCartID int `gorm:"primaryKey"`
 	Quantity       int
+	CreatedAt      time.Time      `json:"CreatedAt"`
+	UpdatedAt      time.Time      `json:"UpdatedAt"`
+	DeletedAt      gorm.DeletedAt `gorm:"index"`
 }

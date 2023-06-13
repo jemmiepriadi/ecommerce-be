@@ -155,6 +155,36 @@ func PostShoppingCart(c *gin.Context) {
 	c.JSON(http.StatusOK, res)
 }
 
+// delete productcart
+func DeleteProductCart(c *gin.Context) {
+	var productCart model.ProductCart
+	var res objects.Response
+	id, err := strconv.Atoi(c.Query("id"))
+	if err != nil && c.Query("id") != "" {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": err,
+		})
+	}
+
+	if err := model.DB.Model(&model.ProductCart{}).Where("product_id = ?", id).First(&productCart); err.Error != nil {
+		res.Message = "Data not found!"
+		res.Data = err.Error
+		c.JSON(http.StatusBadRequest, res)
+		return
+	}
+
+	if result := model.DB.Delete(&productCart); result.Error != nil {
+		res.Message = "Delete Unsucessful"
+		res.Data = err.Error
+		c.JSON(http.StatusBadRequest, res)
+		return
+	}
+
+	res.Message = "Delete Successful"
+	c.JSON(http.StatusOK, res)
+}
+
+// delete entire cart
 func DeleteShoppingCart(c *gin.Context) {
 	res := deletedata.DeleteItem(&model.ShoppingCart{}, c)
 	c.JSON(http.StatusOK, res)

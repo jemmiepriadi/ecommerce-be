@@ -4,7 +4,6 @@ import (
 	"context"
 	"ecommerce/model"
 	"ecommerce/model/objects"
-	deletedata "ecommerce/utils/deleteData"
 	"ecommerce/utils/paginations"
 	"fmt"
 	"log"
@@ -136,6 +135,7 @@ func PostProduct(c *gin.Context) {
 		Bucket: aws.String("ecommerce-jemmi	"),
 		Key:    aws.String(file.Filename),
 		Body:   f,
+		ACL:    "public-read",
 	})
 
 	if err != nil {
@@ -164,20 +164,17 @@ func PostProduct(c *gin.Context) {
 }
 
 func UpdateProduct(c *gin.Context) {
-	var product []model.Product
+	var product model.Product
 	var req model.Product
 	res := objects.Response{}
 	id, err := strconv.Atoi(c.Query("id"))
-	if err != nil {
+	if err != nil && c.Query("id") != "" {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"error": err,
 		})
-	}
-	if err := model.DB.Model(&model.Product{}).Where("ID = ?", id).Find(&product); err != nil || len(product) == 0 {
-		res.Message = "Data not found!"
-		c.JSON(http.StatusBadRequest, res)
 		return
 	}
+
 	if err := c.ShouldBindJSON(&req); err != nil {
 		fmt.Println("Failed to parse request to struct: ", err)
 		res.Code = "02"
@@ -186,15 +183,44 @@ func UpdateProduct(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, res)
 		return
 	}
-	req.ID = product[0].ID
+	if err := model.DB.Table("products").Where("ID = ?", id).First(&product); err.Error != nil {
+		res.Message = "Data not found!"
+		res.Data = err.Error
+		c.JSON(http.StatusBadRequest, res)
+		return
+	}
+	req.ID = product.ID
 	if result := model.DB.Save(&req); result.Error != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": result.Error})
 	}
-	res.Message = "Create Successful"
+	res.Message = "Update Succes"
+	res.Data = req
 	c.JSON(http.StatusBadRequest, res)
 }
 
 func DeleteProduct(c *gin.Context) {
-	res := deletedata.DeleteItem(&model.Product{}, c)
+	// res := deletedata.DeleteItem(&model.Product{}, c)
+	id, err := strconv.Atoi(c.Query("id"))
+	var product model.Product
+
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err})
+	}
+	res := &objects.Response{}
+
+	if err := model.DB.Table("products").Where("ID = ?", id).First(&product); err.Error != nil {
+		res.Message = "Data not found!"
+		res.Data = err.Error
+		c.JSON(http.StatusBadRequest, res)
+		return
+	}
+
+	if result := model.DB.Delete(&product); result.Error != nil {
+		res.Message = "Delete Unsucessful"
+		res.Data = err.Error
+		c.JSON(http.StatusBadRequest, res)
+		return
+	}
+	res.Message = "Delete successfull"
 	c.JSON(http.StatusOK, res)
 }
