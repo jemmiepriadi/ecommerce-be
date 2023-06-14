@@ -97,21 +97,23 @@ func CreateOrder(c *gin.Context) {
 	res.Message = "succesfull create order"
 
 	//remove related carts
-	var shoppingCart model.ShoppingCart
-	if err := model.DB.Table("shopping_carts").Where("consumer_id = ?", req[0].ConsumerID).First(&shoppingCart); err.Error != nil {
+	var shoppingCart []model.ShoppingCart
+	if err := model.DB.Table("shopping_carts").Where("consumer_id = ?", req[0].ConsumerID).Find(&shoppingCart); err.Error != nil {
 		res.Message = "Data not found!"
 		res.Data = err.Error
 		c.JSON(http.StatusBadRequest, res)
 		return
 	}
 
-	var productCart model.ProductCart
+	var productCart []model.ProductCart
 
-	if err := model.DB.Model(&model.ProductCart{}).Where("shopping_cart_id = ?", shoppingCart.ID).First(&productCart); err.Error != nil {
-		res.Message = "Data not found!"
-		res.Data = err.Error
-		c.JSON(http.StatusBadRequest, res)
-		return
+	for _, value := range shoppingCart {
+		if err := model.DB.Model(&model.ProductCart{}).Where("shopping_cart_id = ?", value.ID).Find(&productCart); err.Error != nil {
+			res.Message = "Data not found!"
+			res.Data = err.Error
+			c.JSON(http.StatusBadRequest, res)
+			return
+		}
 	}
 
 	if result := model.DB.Delete(&shoppingCart); result.Error != nil {

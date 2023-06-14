@@ -187,7 +187,7 @@ func DeleteProductCart(c *gin.Context) {
 func DeleteShoppingCart(c *gin.Context) {
 	// res := deletedata.DeleteItem(&model.ShoppingCart{}, c) => not needed, will be deleted later
 	id, err := strconv.Atoi(c.Query("id"))
-	var shoppingCart model.ShoppingCart
+	var shoppingCart []model.ShoppingCart
 
 	if err != nil && c.Query("id") != "" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err})
@@ -201,7 +201,7 @@ func DeleteShoppingCart(c *gin.Context) {
 		return
 	}
 
-	var productCart model.ProductCart
+	var productCart []model.ProductCart
 
 	if err := model.DB.Model(&model.ProductCart{}).Where("shopping_cart = ?", id).First(&productCart); err.Error != nil {
 		res.Message = "Data not found!"
