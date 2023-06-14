@@ -64,13 +64,20 @@ type Product struct {
 }
 
 type Order struct {
-	ConsumerID int
-	SellerID   int
-	Product    []Product `gorm:"many2many:ProductOrder;"`
-	Status     bool
-	CreatedAt  time.Time
-	UpdatedAt  time.Time
-	DeletedAt  gorm.DeletedAt
+	ConsumerID  int
+	SellerID    int
+	Payment     int
+	Email       string
+	City        string
+	TotalPrice  int
+	State       string
+	ZipCode     int
+	PaymentInfo int
+	Product     []Product `gorm:"many2many:ProductOrder;"`
+	Status      bool
+	CreatedAt   time.Time
+	UpdatedAt   time.Time
+	DeletedAt   gorm.DeletedAt
 }
 
 type Checkout struct {

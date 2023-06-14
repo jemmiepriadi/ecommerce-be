@@ -3,7 +3,6 @@ package shoppingcart
 import (
 	"ecommerce/model"
 	"ecommerce/model/objects"
-	deletedata "ecommerce/utils/deleteData"
 	"ecommerce/utils/paginations"
 	"fmt"
 	"math"
@@ -186,6 +185,43 @@ func DeleteProductCart(c *gin.Context) {
 
 // delete entire cart
 func DeleteShoppingCart(c *gin.Context) {
-	res := deletedata.DeleteItem(&model.ShoppingCart{}, c)
+	// res := deletedata.DeleteItem(&model.ShoppingCart{}, c) => not needed, will be deleted later
+	id, err := strconv.Atoi(c.Query("id"))
+	var shoppingCart model.ShoppingCart
+
+	if err != nil && c.Query("id") != "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err})
+	}
+	res := &objects.Response{}
+
+	if err := model.DB.Table("shopping_carts").Where("ID = ?", id).First(&shoppingCart); err.Error != nil {
+		res.Message = "Data not found!"
+		res.Data = err.Error
+		c.JSON(http.StatusBadRequest, res)
+		return
+	}
+
+	var productCart model.ProductCart
+
+	if err := model.DB.Model(&model.ProductCart{}).Where("shopping_cart = ?", id).First(&productCart); err.Error != nil {
+		res.Message = "Data not found!"
+		res.Data = err.Error
+		c.JSON(http.StatusBadRequest, res)
+		return
+	}
+
+	if result := model.DB.Delete(&shoppingCart); result.Error != nil {
+		res.Message = "Delete Unsucessful"
+		res.Data = result.Error
+		c.JSON(http.StatusBadRequest, res)
+		return
+	}
+
+	if result := model.DB.Delete(&productCart); result.Error != nil {
+		res.Message = "Delete Unsucessful"
+		res.Data = result.Error
+		c.JSON(http.StatusBadRequest, res)
+		return
+	}
 	c.JSON(http.StatusOK, res)
 }

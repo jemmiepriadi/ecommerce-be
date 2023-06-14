@@ -1,7 +1,6 @@
 package orderData
 
 import (
-	shoppingcart "ecommerce/controller/shopping-cart"
 	"ecommerce/model"
 	"ecommerce/model/objects"
 	"ecommerce/utils/paginations"
@@ -63,38 +62,72 @@ func GetOrder(c *gin.Context) {
 func CreateOrder(c *gin.Context) {
 	//when checkout
 	var res objects.Response
-	var req model.Order
+	var req []model.Order
 
 	if err := c.ShouldBindJSON(&req); err != nil {
 		fmt.Println("Failed to parse request to struct: ", err)
 		res.Code = "02"
 		res.Message = "Failed parsing request"
+		res.Data = err
 
-		c.JSON(http.StatusBadRequest, res)
+		c.JSON(http.StatusOK, res)
 		return
 	}
-	order := &model.Order{ConsumerID: req.ConsumerID, SellerID: req.SellerID, Product: req.Product, Status: req.Status}
 
-	if result := model.DB.Create(&order); result.Error != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": result.Error,
-		})
-		return
-	}
-	OrderID := order.ID
-
-	for _, value := range req.Product {
-		if result := model.DB.Create(&model.ProductOrder{ProductID: value.ID, OrderID: OrderID}); result.Error != nil {
+	var array []interface{}
+	for _, val := range req {
+		if result := model.DB.Create(&val); result.Error != nil {
 			c.JSON(http.StatusBadRequest, gin.H{
 				"error": result.Error,
 			})
 			return
 		}
+		for _, value := range val.Product {
+			if result := model.DB.Save(&model.ProductOrder{ProductID: value.ID, OrderID: val.ID}); result.Error != nil {
+				c.JSON(http.StatusBadRequest, gin.H{
+					"error": result.Error,
+				})
+				return
+			}
+		}
+		array = append(array, val)
 	}
-	res.Data = order
+	res.Data = array
+
 	res.Message = "succesfull create order"
-	shoppingcart.DeleteShoppingCart(c)
-	c.JSON(http.StatusBadRequest, res)
+
+	//remove related carts
+	var shoppingCart model.ShoppingCart
+	if err := model.DB.Table("shopping_carts").Where("consumer_id = ?", req[0].ConsumerID).First(&shoppingCart); err.Error != nil {
+		res.Message = "Data not found!"
+		res.Data = err.Error
+		c.JSON(http.StatusBadRequest, res)
+		return
+	}
+
+	var productCart model.ProductCart
+
+	if err := model.DB.Model(&model.ProductCart{}).Where("shopping_cart_id = ?", shoppingCart.ID).First(&productCart); err.Error != nil {
+		res.Message = "Data not found!"
+		res.Data = err.Error
+		c.JSON(http.StatusBadRequest, res)
+		return
+	}
+
+	if result := model.DB.Delete(&shoppingCart); result.Error != nil {
+		res.Message = "Delete Unsucessful"
+		res.Data = result.Error
+		c.JSON(http.StatusBadRequest, res)
+		return
+	}
+
+	if result := model.DB.Delete(&productCart); result.Error != nil {
+		res.Message = "Delete Unsucessful"
+		res.Data = result.Error
+		c.JSON(http.StatusBadRequest, res)
+		return
+	}
+	c.JSON(http.StatusOK, res)
 }
 
 func UpdateOrder(c *gin.Context) {
@@ -105,12 +138,12 @@ func UpdateOrder(c *gin.Context) {
 		fmt.Println("Failed to parse request to struct: ", err)
 		res.Code = "02"
 		res.Message = "Failed parsing request"
-
+		res.Data = err
 		c.JSON(http.StatusBadRequest, res)
 		return
 	}
 	id, err := strconv.Atoi(c.Query("id"))
-	if err != nil {
+	if err != nil && c.Query("id") != "" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err})
 	}
 	if result := model.DB.Model(&req).Where("id =?", id).Find(&order); result.Error != nil {
@@ -128,5 +161,5 @@ func UpdateOrder(c *gin.Context) {
 	}
 	res.Data = order
 	res.Message = "succesfull create order"
-	c.JSON(http.StatusBadRequest, res)
+	c.JSON(http.StatusOK, res)
 }

@@ -24,6 +24,11 @@ func ConnectDataBase() {
 		panic("Failed to setup join table")
 	}
 
+	if err := database.SetupJoinTable(&Order{}, "Product", &ProductOrder{}); err != nil {
+		println(err.Error())
+		panic("Failed to setup join table")
+	}
+
 	database.AutoMigrate(&Account{}, &Seller{}, &Consumer{}, &Product{}, &Order{}, &ShoppingCart{})
 
 	DB = database
@@ -82,14 +87,21 @@ type Product struct {
 }
 
 type Order struct {
-	ID         int
-	ConsumerID int
-	SellerID   int
-	Product    []Product `gorm:"many2many:ProductOrder;"`
-	Status     bool
-	CreatedAt  time.Time      `json:"CreatedAt"`
-	UpdatedAt  time.Time      `json:"UpdatedAt"`
-	DeletedAt  gorm.DeletedAt `gorm:"index"`
+	ID          int
+	ConsumerID  int
+	SellerID    int
+	Payment     string
+	Email       string
+	City        string
+	TotalPrice  int
+	State       string
+	ZipCode     int
+	PaymentInfo int
+	Product     []Product `gorm:"many2many:ProductOrder;"`
+	Status      bool
+	CreatedAt   time.Time      `json:"CreatedAt"`
+	UpdatedAt   time.Time      `json:"UpdatedAt"`
+	DeletedAt   gorm.DeletedAt `gorm:"index"`
 }
 
 type ShoppingCart struct {
@@ -103,8 +115,11 @@ type ShoppingCart struct {
 }
 
 type ProductOrder struct {
-	ProductID int `gorm:"primaryKey"`
-	OrderID   int `gorm:"primaryKey"`
+	ProductID int            `gorm:"primaryKey"`
+	OrderID   int            `gorm:"primaryKey"`
+	CreatedAt time.Time      `json:"CreatedAt"`
+	UpdatedAt time.Time      `json:"UpdatedAt"`
+	DeletedAt gorm.DeletedAt `gorm:"index"`
 }
 
 type ProductCart struct {

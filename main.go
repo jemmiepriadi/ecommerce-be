@@ -32,12 +32,12 @@ func main() {
 
 	orders := public.Group("/orders")
 	orders.GET("/", orderData.GetOrder)
-	orders.POST("/", auth.Auth(), orderData.CreateOrder)
+	orders.POST("/", orderData.CreateOrder)
 	orders.PUT("/update", auth.Auth(), orderData.UpdateOrder)
 
 	product := public.Group("/products")
 	product.GET("/", products.GetAllProducts)
-	product.POST("/create", products.PostProduct)
+	product.POST("/create", auth.Auth(), products.PostProduct)
 	product.PUT("/update", auth.Auth(), products.UpdateProduct)
 	product.DELETE("/delete", auth.Auth(), products.DeleteProduct)
 
