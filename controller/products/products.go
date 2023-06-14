@@ -158,7 +158,7 @@ func PostProduct(c *gin.Context) {
 	if err := c.ShouldBindJSON(&req); err != nil {
 		fmt.Println("Failed to parse request to struct: ", err)
 
-		res.Error = "Failed parsing request"
+		res.Message = "Failed parsing request"
 		isBindFail = true
 	}
 	if isBindFail {
@@ -236,7 +236,7 @@ func UpdateProduct(c *gin.Context) {
 	var isBindFail bool
 	if err := c.ShouldBindJSON(&req); err != nil {
 		fmt.Println("Failed to parse request to struct: ", err)
-		res.Error = "Failed parsing request"
+		res.Message = "Failed parsing request"
 		isBindFail = true
 
 	}

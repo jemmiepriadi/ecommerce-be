@@ -88,8 +88,8 @@ type Product struct {
 
 type Order struct {
 	ID          int
-	ConsumerID  int
-	SellerID    int
+	ConsumerID  *int
+	SellerID    *int
 	Payment     string
 	Email       string
 	City        string
