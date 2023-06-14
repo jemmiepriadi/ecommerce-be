@@ -61,20 +61,14 @@ func PaginateProduct(product *model.Product, pagination *paginations.Pagination,
 			msg := result.Error
 			return nil, msg
 		}
-		model.DB.Model(&Products).Count(&totalData)
 
-		pagination.TotalData = totalData
+		pagination.TotalData = int64(len(Products))
 		totalPages := int(math.Ceil(float64(totalData) / float64(pagination.Size)))
 		pagination.TotalPages = totalPages
 		pagination.Data = Products
 
 		return pagination, nil
 	}
-	model.DB.Model(&Products).Count(&totalData)
-
-	pagination.TotalData = totalData
-	totalPages := int(math.Ceil(float64(totalData) / float64(pagination.Size)))
-	pagination.TotalPages = totalPages
 
 	//check if searched by name
 	if c.Query("name") != "" {
@@ -86,6 +80,10 @@ func PaginateProduct(product *model.Product, pagination *paginations.Pagination,
 		msg := result.Error
 		return nil, msg
 	}
+
+	pagination.TotalData = totalData
+	totalPages := int(math.Ceil(float64(totalData) / float64(pagination.Size)))
+	pagination.TotalPages = totalPages
 	pagination.Data = Products
 	return pagination, nil
 }

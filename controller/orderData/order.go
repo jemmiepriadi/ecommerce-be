@@ -144,7 +144,7 @@ func CreateOrder(c *gin.Context) {
 
 func UpdateOrder(c *gin.Context) {
 	var res objects.Response
-	var order objects.Order
+	var order model.Order
 	var req model.Order
 	if err := c.ShouldBindJSON(&req); err != nil {
 		fmt.Println("Failed to parse request to struct: ", err)
@@ -158,9 +158,9 @@ func UpdateOrder(c *gin.Context) {
 	if err != nil && c.Query("id") != "" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err})
 	}
-	if result := model.DB.Model(&req).Where("id =?", id).Find(&order); result.Error != nil {
+	if result := model.DB.Table("orders").Where(model.Order{ID: id}).First(&order); result.Error != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"error": result.Error,
+			"error": result,
 		})
 		return
 	}
@@ -173,5 +173,5 @@ func UpdateOrder(c *gin.Context) {
 	}
 	res.Data = order
 	res.Message = "succesfull create order"
-	c.JSON(http.StatusOK, res)
+	c.JSON(http.StatusOK, order)
 }

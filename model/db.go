@@ -94,6 +94,7 @@ type Order struct {
 	Email       string
 	City        string
 	TotalPrice  int
+	Address     string
 	State       string
 	ZipCode     int
 	PaymentInfo int
