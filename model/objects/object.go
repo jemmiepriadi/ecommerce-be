@@ -74,7 +74,7 @@ type Order struct {
 	ZipCode     int
 	PaymentInfo int
 	Product     []Product `gorm:"many2many:ProductOrder;"`
-	Status      bool
+	Status      string
 	CreatedAt   time.Time
 	UpdatedAt   time.Time
 	DeletedAt   gorm.DeletedAt

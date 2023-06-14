@@ -98,7 +98,7 @@ type Order struct {
 	ZipCode     int
 	PaymentInfo int
 	Product     []Product `gorm:"many2many:ProductOrder;"`
-	Status      bool
+	Status      string
 	CreatedAt   time.Time      `json:"CreatedAt"`
 	UpdatedAt   time.Time      `json:"UpdatedAt"`
 	DeletedAt   gorm.DeletedAt `gorm:"index"`
@@ -115,8 +115,9 @@ type ShoppingCart struct {
 }
 
 type ProductOrder struct {
-	ProductID int            `gorm:"primaryKey"`
-	OrderID   int            `gorm:"primaryKey"`
+	ProductID int `gorm:"primaryKey"`
+	OrderID   int `gorm:"primaryKey"`
+	Quantity  int
 	CreatedAt time.Time      `json:"CreatedAt"`
 	UpdatedAt time.Time      `json:"UpdatedAt"`
 	DeletedAt gorm.DeletedAt `gorm:"index"`

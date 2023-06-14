@@ -16,7 +16,7 @@ func GetOrder(c *gin.Context) {
 	var order []model.Order
 	var pagination = paginations.GeneratePaginationFromRequest(c)
 	var totalData int64
-	var products []model.Product
+	var product []model.Product
 
 	var res objects.Response
 
@@ -31,24 +31,33 @@ func GetOrder(c *gin.Context) {
 	}
 	queryBuilder := model.DB.Offset(pagination.GetOffset()).Limit(pagination.GetSize()).Order(pagination.GetSort())
 
-	result := queryBuilder.Model(&model.Order{}).Where(model.Order{ConsumerID: consumerID, SellerID: sellerID}).Find(&order)
+	result := queryBuilder.Table("orders").Where(&model.Order{ConsumerID: consumerID, SellerID: sellerID}).Find(&order)
 	if result.Error != nil || ((c.Query("consumerID") != "" || c.Query("sellerID") != "") && len(order) == 0) {
 		res.Message = "Data not found!"
 		c.JSON(http.StatusBadRequest, res)
 		return
 	}
 
-	for _, value := range order {
-		result = queryBuilder.Model(&model.ProductOrder{}).Where(model.ProductOrder{OrderID: value.ID}).Find(&products)
-		if result.Error != nil || len(products) == 0 {
+	var product_orders []model.ProductOrder
+
+	for key, value := range order {
+		result = model.DB.Table("product_orders").Where(&model.ProductOrder{OrderID: value.ID}).Find(&product_orders)
+		if result.Error != nil {
 			res.Message = "Data not found!"
 			c.JSON(http.StatusBadRequest, res)
 			return
 		}
-		value.Product = products
+
+		result = model.DB.Table("products").Joins("left join product_orders on product_orders.product_id = products.id").Where("product_orders.order_id=?", value.ID).Find(&product)
+		if result.Error != nil {
+			res.Message = "Data not found!"
+			c.JSON(http.StatusBadRequest, res)
+			return
+		}
+		order[key].Product = product
 	}
 
-	model.DB.Model(&order).Count(&totalData)
+	totalData = int64(len(order))
 
 	pagination.TotalData = totalData
 	totalPages := int(math.Ceil(float64(totalData) / float64(pagination.Size)))
@@ -83,7 +92,7 @@ func CreateOrder(c *gin.Context) {
 			return
 		}
 		for _, value := range val.Product {
-			if result := model.DB.Save(&model.ProductOrder{ProductID: value.ID, OrderID: val.ID}); result.Error != nil {
+			if result := model.DB.Save(&model.ProductOrder{ProductID: value.ID, OrderID: val.ID, Quantity: value.Quantity}); result.Error != nil {
 				c.JSON(http.StatusBadRequest, gin.H{
 					"error": result.Error,
 				})
@@ -116,6 +125,13 @@ func CreateOrder(c *gin.Context) {
 		}
 	}
 
+	if result := model.DB.Delete(&productCart); result.Error != nil {
+		res.Message = "Delete Unsucessful"
+		res.Data = result.Error
+		c.JSON(http.StatusBadRequest, res)
+		return
+	}
+
 	if result := model.DB.Delete(&shoppingCart); result.Error != nil {
 		res.Message = "Delete Unsucessful"
 		res.Data = result.Error
@@ -123,12 +139,6 @@ func CreateOrder(c *gin.Context) {
 		return
 	}
 
-	if result := model.DB.Delete(&productCart); result.Error != nil {
-		res.Message = "Delete Unsucessful"
-		res.Data = result.Error
-		c.JSON(http.StatusBadRequest, res)
-		return
-	}
 	c.JSON(http.StatusOK, res)
 }
 
