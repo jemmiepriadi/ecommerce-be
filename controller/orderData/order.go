@@ -31,7 +31,7 @@ func GetOrder(c *gin.Context) {
 	}
 	queryBuilder := model.DB.Offset(pagination.GetOffset()).Limit(pagination.GetSize()).Order(pagination.GetSort())
 
-	result := queryBuilder.Table("orders").Where(&model.Order{ConsumerID: &consumerID, SellerID: &sellerID}).Find(&order)
+	result := queryBuilder.Table("orders").Where(&model.Order{ConsumerID: &consumerID}).Or(&model.Order{SellerID: &sellerID}).Find(&order)
 	if result.Error != nil || ((c.Query("consumerID") != "" || c.Query("sellerID") != "") && len(order) == 0) {
 		res.Message = "Data not found!"
 		c.JSON(http.StatusBadRequest, res)
@@ -127,16 +127,12 @@ func CreateOrder(c *gin.Context) {
 
 	if result := model.DB.Delete(&productCart); result.Error != nil {
 		res.Message = "Delete Unsucessful"
-		res.Data = result.Error
-		c.JSON(http.StatusBadRequest, res)
-		return
+		res.Error = result.Error
 	}
 
 	if result := model.DB.Delete(&shoppingCart); result.Error != nil {
 		res.Message = "Delete Unsucessful"
-		res.Data = result.Error
-		c.JSON(http.StatusBadRequest, res)
-		return
+		res.Error = result.Error
 	}
 
 	c.JSON(http.StatusOK, res)
